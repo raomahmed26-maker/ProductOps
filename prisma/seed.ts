@@ -301,19 +301,21 @@ const products: ProductSeed[] = [
       { platform: "APP_STORE", versionLabel: "1.0.0", submittedDaysAgo: 104, status: "LIVE", decidedDaysAgo: 98 },
       { platform: "PLAY_STORE", versionLabel: "1.0.0", submittedDaysAgo: 104, status: "LIVE", decidedDaysAgo: 101 },
     ],
+    // Still clearing every threshold, but every line has been falling for a
+    // quarter. The kind of decline that is easy to miss week to week.
     metrics: [
-      { installs: 1840, activationRate: 61.2, d1: 58.4, d7: 19.1, d30: 9.2, revenue: 2140, payingUsers: 96 },
-      { installs: 1760, activationRate: 60.4, d1: 57.9, d7: 18.4, d30: 8.9, revenue: 1985, payingUsers: 89 },
-      { installs: 1690, activationRate: 59.8, d1: 57.1, d7: 17.8, d30: 8.6, revenue: 1870, payingUsers: 84 },
-      { installs: 1580, activationRate: 58.9, d1: 56.8, d7: 17.2, d30: 8.1, revenue: 1710, payingUsers: 78 },
-      { installs: 1495, activationRate: 58.1, d1: 56.2, d7: 16.9, d30: 7.9, revenue: 1620, payingUsers: 74 },
-      { installs: 1410, activationRate: 57.4, d1: 55.9, d7: 16.4, d30: 7.6, revenue: 1540, payingUsers: 71 },
-      { installs: 1355, activationRate: 56.8, d1: 55.4, d7: 16.1, d30: 7.4, revenue: 1465, payingUsers: 68 },
-      { installs: 1280, activationRate: 56.1, d1: 55.1, d7: 15.8, d30: 7.1, revenue: 1390, payingUsers: 64 },
-      { installs: 1210, activationRate: 55.3, d1: 54.7, d7: 15.4, d30: 6.9, revenue: 1310, payingUsers: 61 },
-      { installs: 1145, activationRate: 54.8, d1: 54.2, d7: 15.1, d30: 6.6, revenue: 1240, payingUsers: 58 },
-      { installs: 1080, activationRate: 54.1, d1: 53.8, d7: 14.8, d30: 6.4, revenue: 1165, payingUsers: 55 },
-      { installs: 1020, activationRate: 53.6, d1: 53.1, d7: 14.4, d30: 6.1, revenue: 1090, payingUsers: 52 },
+      { installs: 1980, activationRate: 63.8, d1: 61.4, d7: 21.4, d30: 11.2, revenue: 2310, payingUsers: 104 },
+      { installs: 1920, activationRate: 63.1, d1: 60.8, d7: 20.9, d30: 10.9, revenue: 2240, payingUsers: 101 },
+      { installs: 1865, activationRate: 62.6, d1: 60.1, d7: 20.3, d30: 10.6, revenue: 2170, payingUsers: 98 },
+      { installs: 1810, activationRate: 62.0, d1: 59.6, d7: 19.8, d30: 10.2, revenue: 2095, payingUsers: 94 },
+      { installs: 1740, activationRate: 61.4, d1: 59.0, d7: 19.2, d30: 9.9, revenue: 2010, payingUsers: 91 },
+      { installs: 1675, activationRate: 60.8, d1: 58.5, d7: 18.7, d30: 9.5, revenue: 1930, payingUsers: 87 },
+      { installs: 1610, activationRate: 60.1, d1: 58.0, d7: 18.1, d30: 9.2, revenue: 1855, payingUsers: 84 },
+      { installs: 1535, activationRate: 59.5, d1: 57.4, d7: 17.6, d30: 8.8, revenue: 1770, payingUsers: 80 },
+      { installs: 1460, activationRate: 59.0, d1: 56.9, d7: 17.0, d30: 8.5, revenue: 1685, payingUsers: 76 },
+      { installs: 1385, activationRate: 58.4, d1: 56.5, d7: 16.4, d30: 8.1, revenue: 1600, payingUsers: 72 },
+      { installs: 1300, activationRate: 57.9, d1: 56.1, d7: 15.9, d30: 7.8, revenue: 1510, payingUsers: 68 },
+      { installs: 1210, activationRate: 57.2, d1: 55.8, d7: 15.4, d30: 7.4, revenue: 1415, payingUsers: 64 },
     ],
   },
   {
@@ -386,6 +388,8 @@ const products: ProductSeed[] = [
       { platform: "APP_STORE", versionLabel: "2.0.0", submittedDaysAgo: 146, status: "LIVE", decidedDaysAgo: 141 },
       { platform: "PLAY_STORE", versionLabel: "2.0.0", submittedDaysAgo: 146, status: "LIVE", decidedDaysAgo: 143 },
     ],
+    // Retention has been above the line for a quarter. Acquisition never has —
+    // and the gap is now eight installs a week.
     metrics: [
       { installs: 640, activationRate: 48.2, d1: 51.1, d7: 16.8, d30: 8.4, revenue: 980, payingUsers: 41 },
       { installs: 690, activationRate: 48.9, d1: 51.8, d7: 17.1, d30: 8.6, revenue: 1020, payingUsers: 43 },
@@ -1000,6 +1004,21 @@ async function main() {
     // Every product carries all eight gates, so the pipeline rail is always whole.
     for (const gate of GATES) {
       const stageSeed = seed.stages.find((s) => s.gate === gate);
+
+      // Prisma stamps @updatedAt with the seed time, which would make every stage
+      // look touched today and defeat the stall rule. Date it from its own
+      // newest artifact instead. Untouched gates are dated far back so they
+      // never count as activity.
+      const touchedDaysAgo = Math.min(
+        ...[
+          stageSeed?.completedDaysAgo,
+          stageSeed?.startedDaysAgo,
+          ...(stageSeed?.documents ?? []).map((doc) => doc.updatedDaysAgo),
+          ...(stageSeed?.qaCycles ?? []).map((cycle) => cycle.ranDaysAgo),
+        ].filter((value): value is number => value != null),
+        400,
+      );
+
       const stage = await db.stage.create({
         data: {
           productId: product.id,
@@ -1012,6 +1031,7 @@ async function main() {
           owner: stageSeed?.owner ?? null,
           blockedReason: stageSeed?.blockedReason ?? null,
           notes: stageSeed?.notes ?? null,
+          updatedAt: daysAgo(touchedDaysAgo),
         },
       });
 
@@ -1075,12 +1095,13 @@ async function main() {
       });
     }
 
-    // Metrics are listed newest first for readability, so index maps to weeks ago.
-    for (const [index, metric] of (seed.metrics ?? []).entries()) {
+    // Metrics are written oldest first so the trend reads top to bottom.
+    const metrics = seed.metrics ?? [];
+    for (const [index, metric] of metrics.entries()) {
       await db.weeklyMetric.create({
         data: {
           productId: product.id,
-          weekStart: weekStart(index),
+          weekStart: weekStart(metrics.length - 1 - index),
           installs: metric.installs,
           activationRate: metric.activationRate,
           d1: metric.d1,

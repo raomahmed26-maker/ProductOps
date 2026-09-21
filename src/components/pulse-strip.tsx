@@ -22,7 +22,7 @@ export function PulseStrip({ products }: { products: ProductWithStatus[] }) {
         <div>
           <h2 className="text-sm font-semibold tracking-tight">Portfolio pulse</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Days since anything moved on each product.
+            Days since the gate each product is sitting in last moved.
           </p>
         </div>
         <p className="text-xs text-muted-foreground">

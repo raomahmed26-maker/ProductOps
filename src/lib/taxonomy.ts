@@ -103,7 +103,7 @@ export const GATE_SPEC: Record<Gate, GateSpec> = {
   QA: {
     label: "QA cycles",
     short: "QA",
-    intent: "Five cycles run, or the issue rate is under 10%.",
+    intent: "At least five cycles run, with the latest issue rate under 10%.",
     expectedDays: 12,
     requiredDocTypes: ["QA_SHEET"],
   },

@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   // The workspace writes Markdown into vault/ at runtime; without this the
   // production server traces the wrong root when the repo sits inside a monorepo.
   outputFileTracingRoot: process.cwd(),
+  // The floating dev badge sits on top of the sidebar footer.
+  devIndicators: false,
 };
 
 export default nextConfig;

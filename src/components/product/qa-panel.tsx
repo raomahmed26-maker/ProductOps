@@ -67,7 +67,7 @@ export function QAPanel({ stageId, cycles }: { stageId: string; cycles: QACycleR
           >
             {cleared
               ? "Gate cleared"
-              : `Needs ${QA_MIN_CYCLES} cycles or under ${QA_ISSUE_RATE_TARGET}%`}
+              : `Needs ${QA_MIN_CYCLES} cycles with the latest under ${QA_ISSUE_RATE_TARGET}%`}
           </span>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setOpen(true)}>
             <Plus className="size-3.5" />

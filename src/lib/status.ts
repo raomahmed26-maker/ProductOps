@@ -91,6 +91,7 @@ export type StatusInput = {
     status: string;
     submittedAt: Date;
     rejectionReason: string | null;
+    resubmittedAt: Date | null;
     updatedAt: Date;
   }[];
   metrics: {
@@ -141,6 +142,34 @@ export function lastActivity(input: StatusInput): Date {
   return candidates.reduce((latest, date) => (date > latest ? date : latest));
 }
 
+/**
+ * Movement on the gate the product is actually sitting in.
+ *
+ * This is the number that matters, and it is not the same as product-wide
+ * activity: refreshing a competitor doc does not mean the design handover is
+ * moving. Ageing the open gate is what catches work that has quietly stopped.
+ */
+export function currentGateActivity(input: StatusInput): Date {
+  const stage = input.stages.find((s) => s.gate === input.currentGate);
+  const candidates: Date[] = [];
+
+  if (stage) {
+    candidates.push(stage.updatedAt);
+    if (stage.completedAt) candidates.push(stage.completedAt);
+    for (const doc of stage.documents) candidates.push(doc.updatedAt);
+    for (const cycle of stage.qaCycles) candidates.push(cycle.ranOn);
+  }
+  if (input.currentGate === "STORE_SUBMISSION") {
+    for (const submission of input.submissions) candidates.push(submission.updatedAt);
+  }
+  if (input.currentGate === "LIVE") {
+    for (const metric of input.metrics) candidates.push(metric.weekStart);
+  }
+
+  if (candidates.length === 0) return lastActivity(input);
+  return candidates.reduce((latest, date) => (date > latest ? date : latest));
+}
+
 function currentStage(input: StatusInput) {
   return input.stages.find((stage) => stage.gate === input.currentGate);
 }
@@ -160,17 +189,22 @@ export function gateChecklist(
   });
 }
 
+/**
+ * Five cycles is the floor, not the finish line. A fifth cycle that still finds
+ * problems in one test in eight has not cleared anything.
+ */
 export function qaGateCleared(cycles: { cycleNumber: number; issueRate: number }[]): boolean {
-  if (cycles.length === 0) return false;
+  if (cycles.length < QA_MIN_CYCLES) return false;
   const latest = [...cycles].sort((a, b) => b.cycleNumber - a.cycleNumber)[0];
-  return cycles.length >= QA_MIN_CYCLES || latest.issueRate < QA_ISSUE_RATE_TARGET;
+  return latest.issueRate < QA_ISSUE_RATE_TARGET;
 }
 
 export function classify(input: StatusInput, now: Date = new Date()): ProductStatus {
   const reasons: StatusReason[] = [];
-  const activityAt = lastActivity(input);
+  const activityAt = currentGateActivity(input);
   const daysSinceActivity = daysBetween(activityAt, now);
   const stage = currentStage(input);
+  const gateLabel = GATE_SPEC[input.currentGate].label.toLowerCase();
   const gateExpectedDays = stage?.expectedDays ?? GATE_SPEC[input.currentGate].expectedDays;
   const gateAgeDays = stage?.startedAt ? daysBetween(stage.startedAt, now) : null;
   const gateOverrunDays = gateAgeDays === null ? 0 : Math.max(0, gateAgeDays - gateExpectedDays);
@@ -179,33 +213,53 @@ export function classify(input: StatusInput, now: Date = new Date()): ProductSta
   if (daysSinceActivity >= ABANDONED_THRESHOLD_DAYS) {
     reasons.push({
       status: "STALLED",
-      message: `Nothing has moved for ${daysSinceActivity} days. Nobody is asking about this.`,
+      message: `Nothing has moved on ${gateLabel} for ${daysSinceActivity} days. Nobody is asking about this.`,
     });
   } else if (daysSinceActivity >= STALL_THRESHOLD_DAYS) {
     reasons.push({
       status: "STALLED",
-      message: `No artifact touched in ${daysSinceActivity} days, past the ${STALL_THRESHOLD_DAYS}-day stall line.`,
+      message: `No movement on ${gateLabel} in ${daysSinceActivity} days, past the ${STALL_THRESHOLD_DAYS}-day stall line.`,
     });
   }
 
-  // Blocked — explicitly, by a person or by a store.
+  // Blocked — explicitly, by a person or by a store. A rejection only counts
+  // while it is still open; once it has been resubmitted the ball is back with
+  // the reviewers.
   if (stage?.blockedReason) {
     reasons.push({ status: "BLOCKED", message: stage.blockedReason });
-  }
-  const openRejection = input.submissions.find((s) => s.status === "REJECTED");
-  if (openRejection) {
-    reasons.push({
-      status: "BLOCKED",
-      message: `Rejected by ${openRejection.platform === "APP_STORE" ? "the App Store" : "the Play Store"} and not yet resubmitted.`,
-    });
+  } else {
+    const openRejection = input.submissions.find(
+      (s) => s.status === "REJECTED" && !s.resubmittedAt,
+    );
+    if (openRejection) {
+      reasons.push({
+        status: "BLOCKED",
+        message: `Rejected by ${openRejection.platform === "APP_STORE" ? "the App Store" : "the Play Store"} and not yet resubmitted.`,
+      });
+    }
   }
 
-  // At risk — running past your own cadence for this gate.
-  if (gateOverrunDays > 0 && stage?.status !== "COMPLETE") {
+  // At risk — running past your own cadence for this gate. Live is exempt: it is
+  // a steady state you stay in, not a gate you pass through.
+  if (gateOverrunDays > 0 && stage?.status !== "COMPLETE" && input.currentGate !== "LIVE") {
     reasons.push({
       status: "AT_RISK",
       message: `${GATE_SPEC[input.currentGate].label} is ${gateOverrunDays} days over its ${gateExpectedDays}-day window.`,
     });
+  }
+
+  // At risk — the weekly review on a live app has quietly lapsed.
+  if (input.currentGate === "LIVE" && input.metrics.length > 0) {
+    const newest = input.metrics.reduce((latest, metric) =>
+      metric.weekStart > latest.weekStart ? metric : latest,
+    );
+    const weeksBehind = Math.floor(daysBetween(newest.weekStart, now) / 7);
+    if (weeksBehind >= 2) {
+      reasons.push({
+        status: "AT_RISK",
+        message: `No weekly numbers recorded for ${weeksBehind} weeks.`,
+      });
+    }
   }
 
   // At risk — QA not converging.
@@ -318,8 +372,13 @@ function nextAction(
 ): string {
   if (stage?.blockedReason) return `Unblock: ${stage.blockedReason}`;
 
-  const rejected = input.submissions.find((s) => s.status === "REJECTED");
+  const rejected = input.submissions.find((s) => s.status === "REJECTED" && !s.resubmittedAt);
   if (rejected) return "Rework the rejection and resubmit";
+
+  if (input.currentGate === "STORE_SUBMISSION") {
+    const waiting = input.submissions.filter((s) => s.status === "IN_REVIEW");
+    if (waiting.length > 0) return `Waiting on ${waiting.length === 2 ? "both stores" : "the store"}`;
+  }
 
   if (input.currentGate === "LIVE" && health) {
     if (health.failing.includes("D1 retention")) return "First-run experience is leaking users";

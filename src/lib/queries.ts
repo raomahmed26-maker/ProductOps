@@ -66,6 +66,7 @@ function toStatusInput(product: ProductRecord): StatusInput {
       status: submission.status,
       submittedAt: submission.submittedAt,
       rejectionReason: submission.rejectionReason,
+      resubmittedAt: submission.resubmittedAt,
       updatedAt: submission.updatedAt,
     })),
     metrics: product.metrics.map((metric) => ({

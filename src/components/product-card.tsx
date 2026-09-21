@@ -71,7 +71,7 @@ export function ProductCard({
           <span>
             {PHASE_LABEL[product.phase]} · {GATE_SPEC[product.currentGate].short}
           </span>
-          <span>touched {relativeDays(derived.daysSinceActivity)}</span>
+          <span>gate moved {relativeDays(derived.daysSinceActivity)}</span>
         </div>
       </div>
 

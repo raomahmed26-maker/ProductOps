@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           <p>
             {PHASE_LABEL[product.phase]} · {GATE_SPEC[product.currentGate].label}
           </p>
-          <p className="mt-0.5">Last touched {relativeDays(product.derived.daysSinceActivity)}</p>
+          <p className="mt-0.5">Gate last moved {relativeDays(product.derived.daysSinceActivity)}</p>
         </div>
       </header>
 
