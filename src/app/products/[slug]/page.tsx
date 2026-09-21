@@ -88,12 +88,16 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           </div>
           <div className="text-xs text-muted-foreground sm:text-right">
             <p>{product.progress}% of gates complete</p>
-            {product.derived.gateAgeDays != null ? (
+            {product.derived.gateAgeDays == null ? null : product.currentGate === "LIVE" ? (
+              <p className="mt-0.5">
+                Live for {Math.round(product.derived.gateAgeDays / 7)} weeks
+              </p>
+            ) : (
               <p className="mt-0.5">
                 {product.derived.gateAgeDays} days in this gate, {product.derived.gateExpectedDays}{" "}
                 expected
               </p>
-            ) : null}
+            )}
           </div>
         </div>
       </div>

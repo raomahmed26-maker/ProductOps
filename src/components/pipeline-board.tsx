@@ -86,11 +86,13 @@ function PipelineCard({ product, phase }: { product: ProductWithStatus; phase: P
 
       <div className="mt-2.5 flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground">
-          {derived.gateAgeDays == null
-            ? "not started"
-            : `${derived.gateAgeDays}d in gate / ${derived.gateExpectedDays}d`}
+          {product.currentGate === "LIVE"
+            ? `live ${Math.round((derived.gateAgeDays ?? 0) / 7)} weeks`
+            : derived.gateAgeDays == null
+              ? "not started"
+              : `${derived.gateAgeDays}d in gate / ${derived.gateExpectedDays}d`}
         </span>
-        {derived.gateOverrunDays > 0 ? (
+        {derived.gateOverrunDays > 0 && product.currentGate !== "LIVE" ? (
           <span className="font-medium text-amber-600 dark:text-amber-400">
             +{derived.gateOverrunDays}d over
           </span>
