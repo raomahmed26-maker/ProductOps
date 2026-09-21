@@ -36,7 +36,6 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
   const notes = allNotes.filter((note) => note.products.includes(product.slug));
 
   const stageByGate = new Map(product.stages.map((stage) => [stage.gate as Gate, stage]));
-  const qaStage = stageByGate.get("QA");
 
   return (
     <div className="mx-auto max-w-[1100px] px-5 py-8 lg:px-8 lg:py-10">
