@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getExperiments, getPortfolio, getRejectionRollup } from "@/lib/queries";
 import { PulseStrip } from "@/components/pulse-strip";
 import { PipelineBoard } from "@/components/pipeline-board";
@@ -6,7 +5,7 @@ import { ProductCard } from "@/components/product-card";
 import { AttentionFeed, RejectionRollup } from "@/components/attention-feed";
 import { DimensionSpread, ExperimentRail } from "@/components/experiment-rail";
 import { STATUS_SEVERITY } from "@/lib/status";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 
 export const dynamic = "force-dynamic";
 
@@ -57,12 +56,12 @@ export default async function PortfolioPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/vault">Brainstorm vault</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/experiments">Experiment repository</Link>
-          </Button>
+          <ButtonLink href="/vault" variant="outline" size="sm">
+            Brainstorm vault
+          </ButtonLink>
+          <ButtonLink href="/experiments" size="sm">
+            Experiment repository
+          </ButtonLink>
         </div>
       </header>
 
