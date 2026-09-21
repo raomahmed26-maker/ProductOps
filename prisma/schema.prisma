@@ -1,0 +1,215 @@
+// Product operations workspace — structured entities.
+// Brainstorm notes deliberately live outside this database, as plain Markdown in /vault.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  tagline     String
+  audience    String
+  platforms   String // comma separated: ios,android
+  phase       String // PRE_PRODUCTION | PRODUCTION | REVIEW | POST_PRODUCTION
+  currentGate String // MARKET_RESEARCH | PRD | DESIGN | ANALYTICS_CATALOGUE | BUILD | QA | STORE_SUBMISSION | LIVE
+  colorSeed   String   @default("slate")
+  archived    Boolean  @default(false)
+  // Kill/keep thresholds. Portfolio defaults are 1000 weekly installs, D1 55%, D7 15%.
+  minWeeklyInstalls Int   @default(1000)
+  minD1             Float @default(55)
+  minD7             Float @default(15)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stages      Stage[]
+  metrics     WeeklyMetric[]
+  experiments Experiment[]
+  submissions StoreSubmission[]
+
+  @@index([phase])
+}
+
+model Stage {
+  id           String    @id @default(cuid())
+  productId    String
+  gate         String // one of the eight gates
+  status       String // NOT_STARTED | IN_PROGRESS | BLOCKED | COMPLETE
+  startedAt    DateTime?
+  completedAt  DateTime?
+  expectedDays Int // your own cadence: design 7, analytics catalogue 3, build 7...
+  owner        String?
+  blockedReason String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  documents DocumentLink[]
+  qaCycles  QACycle[]
+
+  @@unique([productId, gate])
+  @@index([status])
+}
+
+// The link registry. Nothing is uploaded here — every row points at the real
+// artifact in Figma, Drive, Notion or the store console.
+model DocumentLink {
+  id        String   @id @default(cuid())
+  stageId   String
+  title     String
+  docType   String // MARKET_GAP | COMPETITOR_CUMULATIVE | COMPETITOR_UIUX | COMPETITOR_PRICING | PRD | PRIVACY_POLICY | TOS | FIGMA_APP_UI | FIGMA_STORE_GRAPHICS | FIGMA_APP_ICON | ANALYTICS_CATALOGUE | QA_SHEET | APK_BUILD | STORE_LISTING | OTHER
+  url       String
+  owner     String
+  status    String // DRAFT | IN_REVIEW | APPROVED | SUPERSEDED
+  version   String   @default("v1")
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stage Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([docType])
+}
+
+model QACycle {
+  id          String   @id @default(cuid())
+  stageId     String
+  cycleNumber Int
+  ranOn       DateTime
+  issuesFound Int
+  issuesFixed Int
+  // Share of checks that failed, as a percentage. Gate clears under 10%.
+  issueRate   Float
+  devIssues    Int @default(0)
+  designIssues Int @default(0)
+  prdIssues    Int @default(0)
+  buildLabel  String?
+  sheetUrl    String?
+  createdAt   DateTime @default(now())
+
+  stage Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([stageId, cycleNumber])
+}
+
+model StoreSubmission {
+  id              String    @id @default(cuid())
+  productId       String
+  platform        String // APP_STORE | PLAY_STORE
+  versionLabel    String
+  submittedAt     DateTime
+  status          String // IN_REVIEW | APPROVED | REJECTED | RESUBMITTED | LIVE
+  decidedAt       DateTime?
+  rejectionReason String? // controlled vocabulary, see lib/taxonomy.ts
+  rejectionNotes  String?
+  resubmittedAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([platform, status])
+}
+
+model WeeklyMetric {
+  id             String   @id @default(cuid())
+  productId      String
+  weekStart      DateTime
+  installs       Int
+  activationRate Float
+  d1             Float
+  d7             Float
+  d30            Float?
+  revenue        Float    @default(0)
+  payingUsers    Int      @default(0)
+  source         String   @default("GA4")
+  createdAt      DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, weekStart])
+  @@index([weekStart])
+}
+
+// One canonical record per experiment: plan, execution, result and decision
+// in a single place, whatever surface the experiment ran on.
+model Experiment {
+  id        String @id @default(cuid())
+  refId     String @unique // EXP-001
+  productId String
+  title     String
+
+  // Category and surface
+  category String // IN_APP | BUSINESS_DEV | PROMOTIONAL
+  surface  String // PAYWALL | PRICING | ONBOARDING | FEATURE | UI_UX | PRODUCT_HUNT | REDDIT | COMMUNITY | GOOGLE_CPI | REGIONAL | AD_GROUP | ASO | OTHER
+  dimension String // ACQUISITION | ACTIVATION | RETENTION | MONETISATION
+
+  // Hypothesis, in the enforced format
+  changeDescription String // "We believe [change]"
+  audience          String // "for [audience]"
+  expectedMetric    String // "will cause [metric]"
+  expectedDirection String // UP | DOWN
+  expectedSize      String // "by 15%"
+  timeframe         String // "within 14 days"
+  rationale         String // "because [evidence]"
+
+  // Measurement
+  primaryMetric    String
+  secondaryMetrics String?
+  guardrailMetric  String?
+  minDetectableEffect String?
+
+  // Pre-registered stop rule. All three must exist before the experiment may run.
+  killCriteria   String?
+  stopDate       DateTime?
+  minSampleSize  Int?
+
+  // Prioritisation
+  iceImpact     Int? // 1-10
+  iceConfidence Int? // 1-10
+  iceEase       Int? // 1-10
+
+  status   String // BACKLOG | SCORED | READY | RUNNING | ANALYSIS | DECIDED | ARCHIVED
+  owner    String
+  startedAt DateTime?
+  endedAt   DateTime?
+  variantSummary String?
+  assetUrl       String?
+
+  // A finished experiment refills the backlog with its children.
+  parentId String?
+  parent   Experiment?  @relation("ExperimentLineage", fields: [parentId], references: [id], onDelete: SetNull)
+  children Experiment[] @relation("ExperimentLineage")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  result  ExperimentResult?
+
+  @@index([status])
+  @@index([dimension])
+}
+
+model ExperimentResult {
+  id             String   @id @default(cuid())
+  experimentId   String   @unique
+  baselineValue  Float
+  observedValue  Float
+  deltaPercent   Float
+  sampleSize     Int?
+  guardrailBreached Boolean @default(false)
+  // Ship / iterate / kill. "Interesting" is not a decision.
+  decision       String // SHIP | ITERATE | KILL | INCONCLUSIVE
+  learning       String
+  recordedAt     DateTime @default(now())
+
+  experiment Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+}
