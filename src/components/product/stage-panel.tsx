@@ -74,7 +74,8 @@ export function StagePanel({
             {stage.completedAt
               ? `Completed ${formatDate(stage.completedAt)}`
               : stage.startedAt
-                ? `Started ${formatDate(stage.startedAt)} · ${stage.expectedDays}d expected`
+                ? // Live is ongoing, so an expected duration would be nonsense.
+                  `Started ${formatDate(stage.startedAt)}${gate === "LIVE" ? "" : ` · ${stage.expectedDays}d expected`}`
                 : `${stage.expectedDays}d expected`}
           </p>
         </div>

@@ -60,11 +60,18 @@ async function ensureVault() {
   await fs.mkdir(NOTES_DIR, { recursive: true });
 }
 
+/** YAML turns an unquoted 2026-08-14 into a Date, so normalise both shapes. */
+function asDateString(value: unknown, fallback: string): string {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === "string" && value.trim() !== "") return value.trim().slice(0, 10);
+  return fallback;
+}
+
 function parseNote(filePath: string, raw: string): Note {
   const { data, content } = matter(raw);
   const slug = path.basename(filePath, ".md");
   const title = typeof data.title === "string" && data.title.trim() !== "" ? data.title : slug;
-  const now = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
 
   return {
     slug,
@@ -72,8 +79,8 @@ function parseNote(filePath: string, raw: string): Note {
     tags: asArray(data.tags),
     products: asArray(data.products),
     experiments: asArray(data.experiments),
-    created: typeof data.created === "string" ? data.created : String(data.created ?? now).slice(0, 10),
-    updated: typeof data.updated === "string" ? data.updated : String(data.updated ?? now).slice(0, 10),
+    created: asDateString(data.created, today),
+    updated: asDateString(data.updated, today),
     body: content.trim(),
     links: extractWikilinks(content),
     filePath,
