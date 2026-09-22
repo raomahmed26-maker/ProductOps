@@ -1,18 +1,19 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
-import { resolveDatabaseUrl } from "./database";
+import { needsSsl, resolveDatabaseUrl } from "./database";
 
 function createClient() {
   const url = resolveDatabaseUrl();
   if (!url) {
     throw new Error(
-      "DATABASE_URL is not set. In Vercel: Settings → Environment Variables → add a Postgres URL, then redeploy.",
+      "DATABASE_URL is not set. Add the Supabase pooler URI in Vercel → Settings → Environment Variables, then redeploy.",
     );
   }
 
   const adapter = new PrismaPg({
     connectionString: url,
     max: process.env.VERCEL ? 1 : 10,
+    ssl: needsSsl(url) ? { rejectUnauthorized: false } : undefined,
   });
 
   return new PrismaClient({ adapter });

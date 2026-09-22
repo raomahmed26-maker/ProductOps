@@ -2,35 +2,52 @@ import { ButtonLink } from "@/components/ui/button-link";
 
 export function DatabaseSetup() {
   return (
-    <div className="mx-auto grid min-h-dvh max-w-lg place-items-center px-6 text-center">
+    <div className="mx-auto grid min-h-dvh max-w-lg place-items-center px-6 py-12 text-center">
       <div>
-        <p className="font-mono text-xs text-muted-foreground">Vercel</p>
-        <h1 className="mt-2 text-lg font-semibold tracking-tight">Postgres is not connected</h1>
+        <p className="font-mono text-xs text-muted-foreground">Supabase</p>
+        <h1 className="mt-2 text-lg font-semibold tracking-tight">Connect the database</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This build has no <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">DATABASE_URL</code>.
-          Serverless hosts cannot keep a SQLite file, so the workspace needs a Postgres database
-          (Neon, Supabase, or Vercel Postgres).
+          Create an empty Supabase project. Do not add tables — the next Vercel deploy creates
+          them. Then paste the two connection URIs into Vercel.
         </p>
-        <ol className="mt-5 space-y-2 text-left text-sm text-muted-foreground">
+        <ol className="mt-5 list-decimal space-y-3 pl-5 text-left text-sm text-muted-foreground">
           <li>
-            1. Create a free Postgres database and copy the connection string. Use the{" "}
-            <strong className="font-medium text-foreground">pooled</strong> URL if the host offers one.
+            Open{" "}
+            <a className="font-medium text-foreground underline" href="https://supabase.com/dashboard">
+              supabase.com/dashboard
+            </a>
+            , New project. Wait until it is healthy.
           </li>
           <li>
-            2. In Vercel → this project → Settings → Environment Variables, add{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">DATABASE_URL</code>.
-            If you use Supabase’s pooler, also add{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">DIRECT_URL</code>{" "}
-            with the direct (port 5432) URL so migrations can run.
+            Project Settings → Database → Connect. Method: URI.
+            <ul className="mt-2 space-y-1 pl-4">
+              <li>
+                Type <span className="font-medium text-foreground">Transaction</span> (port 6543) →
+                copy into Vercel as{" "}
+                <code className="rounded bg-muted px-1 font-mono text-[11px]">DATABASE_URL</code>
+              </li>
+              <li>
+                Type <span className="font-medium text-foreground">Session</span> (port 5432) → copy
+                into Vercel as{" "}
+                <code className="rounded bg-muted px-1 font-mono text-[11px]">DIRECT_URL</code>
+              </li>
+            </ul>
           </li>
-          <li>3. Redeploy. The next build will create tables and load the sample portfolio.</li>
+          <li>
+            Vercel → this project → Settings → Environment Variables. Add both, for Production,
+            Preview and Development. Then Redeploy.
+          </li>
         </ol>
+        <p className="mt-5 text-left text-xs text-muted-foreground">
+          Replace <code className="rounded bg-muted px-1 font-mono">[YOUR-PASSWORD]</code> in the
+          URI with the database password you set at project creation. Leave the Table Editor empty.
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <a
-            href="https://vercel.com/docs/storage/vercel-postgres"
+            href="https://supabase.com/dashboard"
             className="inline-flex h-8 items-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
           >
-            Vercel Postgres
+            Open Supabase
           </a>
           <ButtonLink href="/guide" variant="outline" size="sm">
             Owner’s guide

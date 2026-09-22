@@ -36,10 +36,11 @@ portfolio. It will not overwrite data you have already added.
 
 Requires Node 20 or newer and Postgres. Locally the app defaults to
 `postgresql://productops:productops_local_dev@127.0.0.1:5432/product_ops`.
-On Vercel, set `DATABASE_URL` to a hosted Postgres URL (Neon, Supabase, or
-Vercel Postgres) — serverless hosts cannot keep a SQLite file.
+Hosted, it uses **Supabase Postgres** — set `DATABASE_URL` and `DIRECT_URL`
+from the Supabase dashboard (see below). Serverless hosts cannot keep a SQLite
+file.
 
-Copy [`.env.example`](.env.example) to `.env` if you need a different URL.
+Copy [`.env.example`](.env.example) to `.env` if you need a different local URL.
 
 ### Viewing it from anywhere other than localhost
 
@@ -201,16 +202,18 @@ Gate names, expected durations and required documents are in
 [`src/lib/taxonomy.ts`](src/lib/taxonomy.ts), as are the rejection reasons,
 experiment surfaces and every other controlled list.
 
-## Deploy on Vercel
+## Deploy on Vercel with Supabase
 
-The build that failed with `The table main.Product does not exist` was Next
-prerendering `/_not-found`, which loads the root layout, which queried SQLite.
-There is no SQLite file on Vercel, and there never will be — use Postgres.
+Do not create tables in the Supabase Table Editor. An empty database is correct.
 
-1. Create a Postgres database (Vercel Storage → Postgres, or a free [Neon](https://neon.tech) / [Supabase](https://supabase.com) project).
-2. In the Vercel project: **Settings → Environment Variables**.
-   - `DATABASE_URL` — the connection string. Prefer the **pooled** URL. Add `?sslmode=require` if the host needs TLS.
-   - `DIRECT_URL` — only if you use a pooler that cannot run migrations (Supabase transaction mode on port 6543). Set this to the direct port-5432 URL.
-3. Redeploy. `vercel-build` runs `prisma migrate deploy` and, if the database is empty, seeds the sample portfolio.
+1. [Create a Supabase project](https://supabase.com/dashboard). Wait until it is healthy.
+2. **Project Settings → Database → Connect**. Choose URI.
+   - **Transaction** (port **6543**) → Vercel env `DATABASE_URL`
+   - **Session** (port **5432**) → Vercel env `DIRECT_URL`
+3. Replace `[YOUR-PASSWORD]` in both URIs with the database password from project creation.
+4. Vercel → this project → **Settings → Environment Variables**. Add both names for Production, Preview and Development.
+5. Redeploy. `vercel-build` runs `prisma migrate deploy` (creates the nine tables) and seeds the sample portfolio if the database is empty.
 
-Until `DATABASE_URL` is set, the site still builds and shows a setup screen instead of crashing.
+Use the **Session** pooler for `DIRECT_URL`, not the “Direct connection” host, if Vercel cannot reach IPv6-only `db.<ref>.supabase.co`.
+
+Until those variables are set, the site still builds and shows a setup screen instead of crashing.
