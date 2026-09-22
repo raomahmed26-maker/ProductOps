@@ -971,6 +971,15 @@ const experiments: ExperimentSeed[] = [
 ];
 
 async function main() {
+  // Environment bootstrap passes --if-empty so a rebuild never wipes real data.
+  if (process.argv.includes("--if-empty")) {
+    const existing = await db.product.count();
+    if (existing > 0) {
+      console.log(`Skipping seed: ${existing} products already present.`);
+      return;
+    }
+  }
+
   console.log("Resetting workspace data...");
   await db.experimentResult.deleteMany();
   await db.experiment.deleteMany();

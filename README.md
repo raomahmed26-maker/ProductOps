@@ -56,6 +56,11 @@ Every script binds `::` rather than `0.0.0.0`, which listens on IPv6 and IPv4
 together. Binding `0.0.0.0` alone refuses connections from any proxy that
 resolves `localhost` to `::1`, which presents as the server being down.
 
+[`.cursor/environment.json`](.cursor/environment.json) installs dependencies and
+runs the dev server in a named terminal, so a Cloud Agent boots with the app
+already listening on 43127. The seed runs with `--if-empty` there, so a rebuild
+never overwrites real data.
+
 ## What is in it
 
 ### Portfolio dashboard — `/`
