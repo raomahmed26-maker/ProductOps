@@ -12,9 +12,10 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
     "db:seed": "tsx prisma/seed.ts",
+    "db:clear": "tsx prisma/clear.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "setup": "prisma migrate deploy && prisma generate && tsx prisma/seed.ts"
+    "setup": "prisma migrate deploy && prisma generate && tsx prisma/seed.ts --if-empty"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

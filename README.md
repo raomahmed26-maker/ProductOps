@@ -31,7 +31,8 @@ npm run setup   # migrate, generate the client, seed the example portfolio
 npm run dev     # http://localhost:43127
 ```
 
-`npm run setup` is safe to re-run; the seed clears and rebuilds the sample data.
+`npm run setup` migrates and, if the database is empty, loads the sample
+portfolio. It will not overwrite data you have already added.
 
 Requires Node 20 or newer. No external services, no credentials, no network
 access needed — the database is a single SQLite file at `prisma/workspace.db`.
@@ -160,17 +161,26 @@ vault/notes/          the brainstorm space, as .md files
 | --- | --- |
 | `npm run dev` | Dev server on port 43127, for work on localhost |
 | `npm run preview` | Production build served on 43127, reachable from any host |
-| `npm run setup` | Migrate, generate the Prisma client, seed |
-| `npm run db:seed` | Reseed the sample portfolio |
+| `npm run setup` | Migrate, generate the Prisma client, seed only if empty |
+| `npm run db:seed` | Reload the sample portfolio (wipes current products) |
+| `npm run db:clear` | Wipe products, experiments and metrics; leave the schema |
+| `npm run db:clear -- --vault` | Also archive demo notes out of `vault/notes` |
 | `npm run db:studio` | Prisma Studio against the SQLite file |
 | `npm run db:reset` | Drop and rebuild the database |
 | `npm run lint` | ESLint |
 
 ## Making it yours
 
-The seeded products are placeholders. Rename them in
-[`prisma/seed.ts`](prisma/seed.ts) and reseed, or edit them in Prisma Studio and
-keep the rest of the data.
+Follow **[GUIDE.md](GUIDE.md)** (also in the app at `/guide`). The short version:
+
+```bash
+npm run db:clear              # wipe the six sample apps
+npm run db:clear -- --vault   # also archive the sample notes
+```
+
+Then **Add a product** in the UI. Do not rename the demo apps in place.
+
+`npm run db:seed` reloads the sample portfolio and **will overwrite your data**. `npm run setup` is safe: it only seeds when the database is empty and has not been cleared.
 
 The rules that decide status live in [`src/lib/status.ts`](src/lib/status.ts) as
 named constants at the top of the file — the stall threshold, the QA issue-rate

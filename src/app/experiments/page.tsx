@@ -49,9 +49,14 @@ export default async function ExperimentsPage({ searchParams }: PageProps<"/expe
             later.
           </p>
         </div>
-        <ButtonLink href="/experiments/new" size="sm">
-          New experiment
-        </ButtonLink>
+        <div className="flex gap-2">
+          <ButtonLink href="/guide#how-to-set-up-experiments" variant="outline" size="sm">
+            How experiments work
+          </ButtonLink>
+          <ButtonLink href={products.length === 0 ? "/products/new" : "/experiments/new"} size="sm">
+            {products.length === 0 ? "Add a product first" : "New experiment"}
+          </ButtonLink>
+        </div>
       </header>
 
       <div className="mt-6 rounded-xl border border-border bg-card px-5 py-4">

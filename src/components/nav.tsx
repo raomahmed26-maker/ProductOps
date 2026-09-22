@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { FlaskConical, LayoutDashboard, Menu, NotebookPen, X } from "lucide-react";
+import { BookOpen, FlaskConical, LayoutDashboard, Menu, NotebookPen, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STATUS_DOT, type DerivedStatus } from "@/lib/status";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const sections = [
   { href: "/", label: "Portfolio", icon: LayoutDashboard },
   { href: "/experiments", label: "Experiments", icon: FlaskConical },
   { href: "/vault", label: "Brainstorm vault", icon: NotebookPen },
+  { href: "/guide", label: "Owner’s guide", icon: BookOpen },
 ];
 
 function NavLinks({ products, onNavigate }: { products: NavProduct[]; onNavigate?: () => void }) {
@@ -50,34 +51,54 @@ function NavLinks({ products, onNavigate }: { products: NavProduct[]; onNavigate
       </div>
 
       <div className="space-y-1">
-        <p className="eyebrow px-2.5">Products</p>
+        <div className="flex items-center justify-between px-2.5">
+          <p className="eyebrow">Products</p>
+          <Link
+            href="/products/new"
+            onClick={onNavigate}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Add a product"
+          >
+            <Plus className="size-3.5" />
+          </Link>
+        </div>
         <div className="space-y-0.5">
-          {products.map((product) => {
-            const href = `/products/${product.slug}`;
-            const active = pathname.startsWith(href);
-            return (
-              <Link
-                key={product.slug}
-                href={href}
-                onClick={onNavigate}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-                )}
-              >
-                <span
-                  className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[product.status])}
-                  aria-hidden
-                />
-                <span className="truncate">{product.name}</span>
-                <span className="ml-auto shrink-0 text-[11px] text-muted-foreground/70">
-                  {product.phaseLabel}
-                </span>
+          {products.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-muted-foreground">
+              None yet.{" "}
+              <Link href="/products/new" onClick={onNavigate} className="underline underline-offset-2">
+                Add one
               </Link>
-            );
-          })}
+              .
+            </p>
+          ) : (
+            products.map((product) => {
+              const href = `/products/${product.slug}`;
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={product.slug}
+                  href={href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                  )}
+                >
+                  <span
+                    className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[product.status])}
+                    aria-hidden
+                  />
+                  <span className="truncate">{product.name}</span>
+                  <span className="ml-auto shrink-0 text-[11px] text-muted-foreground/70">
+                    {product.phaseLabel}
+                  </span>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
     </nav>

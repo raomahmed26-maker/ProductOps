@@ -6,10 +6,13 @@
  * Dates are all relative to the seed run, so the ageing and stall rules have
  * something real to bite on.
  */
+import fs from "node:fs";
 import path from "node:path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { GATES, GATE_SPEC, type DocType, type Gate } from "../src/lib/taxonomy";
+
+const CLEARED_MARKER = path.join(process.cwd(), "prisma", ".workspace-cleared");
 
 const databaseUrl =
   process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "prisma", "workspace.db")}`;
@@ -973,11 +976,18 @@ const experiments: ExperimentSeed[] = [
 async function main() {
   // Environment bootstrap passes --if-empty so a rebuild never wipes real data.
   if (process.argv.includes("--if-empty")) {
+    if (fs.existsSync(CLEARED_MARKER)) {
+      console.log("Skipping seed: workspace was cleared for a fresh start.");
+      return;
+    }
     const existing = await db.product.count();
     if (existing > 0) {
       console.log(`Skipping seed: ${existing} products already present.`);
       return;
     }
+  } else if (fs.existsSync(CLEARED_MARKER)) {
+    fs.unlinkSync(CLEARED_MARKER);
+    console.log("Removed the fresh-start marker. Demo data will be loaded.");
   }
 
   console.log("Resetting workspace data...");

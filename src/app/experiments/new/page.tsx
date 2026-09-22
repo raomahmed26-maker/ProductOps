@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getProductOptions } from "@/lib/queries";
 import { ExperimentForm } from "@/components/experiments/experiment-form";
+import { ButtonLink } from "@/components/ui/button-link";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,21 @@ export default async function NewExperimentPage({ searchParams }: PageProps<"/ex
         </p>
       </header>
 
-      <ExperimentForm products={products} defaultProductId={defaultProductId} />
+      {products.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border px-6 py-12 text-center">
+          <p className="text-sm font-medium">Add a product first</p>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
+            Experiments belong to a product. There is nothing to hang this record on yet.
+          </p>
+          <div className="mt-4">
+            <ButtonLink href="/products/new" size="sm">
+              Add a product
+            </ButtonLink>
+          </div>
+        </div>
+      ) : (
+        <ExperimentForm products={products} defaultProductId={defaultProductId} />
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   type Gate,
   type Phase,
 } from "@/lib/taxonomy";
-import { relativeDays } from "@/lib/format";
+import { formatPlatforms, relativeDays } from "@/lib/format";
 import { StatusPill } from "@/components/status-pill";
 import { GateRail } from "@/components/gate-rail";
 import { StagePanel, type StageData } from "@/components/product/stage-panel";
@@ -55,14 +55,19 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{product.tagline}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            For {product.audience} · {product.platforms.split(",").join(" and ")}
+            For {product.audience} · {formatPlatforms(product.platforms)}
           </p>
         </div>
-        <div className="text-right text-xs text-muted-foreground">
-          <p>
-            {PHASE_LABEL[product.phase]} · {GATE_SPEC[product.currentGate].label}
-          </p>
-          <p className="mt-0.5">Gate last moved {relativeDays(product.derived.daysSinceActivity)}</p>
+        <div className="flex flex-wrap items-start gap-2">
+          <ButtonLink href={`/products/${product.slug}/edit`} size="sm" variant="outline">
+            Edit product
+          </ButtonLink>
+          <div className="text-right text-xs text-muted-foreground">
+            <p>
+              {PHASE_LABEL[product.phase]} · {GATE_SPEC[product.currentGate].label}
+            </p>
+            <p className="mt-0.5">Gate last moved {relativeDays(product.derived.daysSinceActivity)}</p>
+          </div>
         </div>
       </header>
 

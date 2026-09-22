@@ -22,8 +22,22 @@ export default async function PortfolioPage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">No products yet</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Run <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">npm run db:seed</code>{" "}
-            to load the example portfolio, or add your first product to start tracking a pipeline.
+            This workspace is empty. Add the first app in your portfolio, or read the owner’s guide
+            before you do.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <ButtonLink href="/products/new" size="sm">
+              Add a product
+            </ButtonLink>
+            <ButtonLink href="/guide" variant="outline" size="sm">
+              Owner’s guide
+            </ButtonLink>
+          </div>
+          <p className="mt-6 text-xs text-muted-foreground">
+            Want the sample portfolio back?{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+              npm run db:seed
+            </code>
           </p>
         </div>
       </div>
@@ -56,11 +70,17 @@ export default async function PortfolioPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ButtonLink href="/guide" variant="outline" size="sm">
+            Owner’s guide
+          </ButtonLink>
           <ButtonLink href="/vault" variant="outline" size="sm">
             Brainstorm vault
           </ButtonLink>
           <ButtonLink href="/experiments" size="sm">
             Experiment repository
+          </ButtonLink>
+          <ButtonLink href="/products/new" size="sm">
+            Add product
           </ButtonLink>
         </div>
       </header>

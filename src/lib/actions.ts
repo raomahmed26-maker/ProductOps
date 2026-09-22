@@ -12,6 +12,7 @@ import {
   EXPERIMENT_STATUSES,
   GATES,
   GATE_PHASE,
+  GATE_SPEC,
   PLATFORMS,
   REJECTION_REASONS,
   STAGE_STATUSES,
@@ -35,6 +36,114 @@ function revalidateProduct(slug?: string) {
 /** Touching any artifact counts as activity, which is what keeps status honest. */
 async function touchProduct(productId: string) {
   await db.product.update({ where: { id: productId }, data: { updatedAt: new Date() } });
+}
+
+// ----------------------------------------------------------------- products
+
+const productSchema = z.object({
+  name: z.string().min(1, "Give the product a name"),
+  tagline: z.string().min(1, "One line on what it does"),
+  audience: z.string().min(1, "Who is it for?"),
+  platforms: z.string().min(1, "Pick at least one platform"),
+  startingGate: z.enum(GATES),
+  minWeeklyInstalls: z.coerce.number().int().min(0).default(1000),
+  minD1: z.coerce.number().min(0).max(100).default(55),
+  minD7: z.coerce.number().min(0).max(100).default(15),
+});
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 60);
+}
+
+/**
+ * Creates a product with all eight gates present, so the pipeline rail is whole
+ * from the first moment. Picking a starting gate marks everything before it
+ * complete, which is how an app that is already halfway through gets added
+ * without inventing history for it.
+ */
+export async function createProduct(
+  formData: FormData,
+): Promise<ActionResult & { slug?: string }> {
+  const parsed = productSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const input = parsed.data;
+
+  const base = slugify(input.name);
+  if (base === "") return fail("That name does not produce a usable address");
+
+  let slug = base;
+  for (let n = 2; await db.product.findUnique({ where: { slug } }); n += 1) {
+    slug = `${base}-${n}`;
+  }
+
+  const startIndex = GATES.indexOf(input.startingGate);
+  const now = new Date();
+
+  const product = await db.product.create({
+    data: {
+      slug,
+      name: input.name,
+      tagline: input.tagline,
+      audience: input.audience,
+      platforms: input.platforms,
+      phase: GATE_PHASE[input.startingGate],
+      currentGate: input.startingGate,
+      minWeeklyInstalls: input.minWeeklyInstalls,
+      minD1: input.minD1,
+      minD7: input.minD7,
+      stages: {
+        create: GATES.map((gate, index) => ({
+          gate,
+          status: index < startIndex ? "COMPLETE" : index === startIndex ? "IN_PROGRESS" : "NOT_STARTED",
+          startedAt: index <= startIndex ? now : null,
+          completedAt: index < startIndex ? now : null,
+          expectedDays: GATE_SPEC[gate].expectedDays,
+        })),
+      },
+    },
+  });
+
+  revalidateProduct(product.slug);
+  return { ok: true, slug: product.slug };
+}
+
+const productEditSchema = productSchema.omit({ startingGate: true }).extend({
+  productId: z.string().min(1),
+});
+
+export async function updateProduct(formData: FormData): Promise<ActionResult & { slug?: string }> {
+  const parsed = productEditSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const { productId, ...data } = parsed.data;
+
+  const product = await db.product.update({ where: { id: productId }, data });
+  revalidateProduct(product.slug);
+  return { ok: true, slug: product.slug };
+}
+
+/** Archiving keeps the history and the learnings; deleting does not. */
+export async function archiveProduct(productId: string): Promise<ActionResult> {
+  const product = await db.product.update({ where: { id: productId }, data: { archived: true } });
+  revalidateProduct(product.slug);
+  return { ok: true };
+}
+
+export async function unarchiveProduct(productId: string): Promise<ActionResult> {
+  const product = await db.product.update({ where: { id: productId }, data: { archived: false } });
+  revalidateProduct(product.slug);
+  return { ok: true };
+}
+
+export async function deleteProduct(productId: string): Promise<ActionResult> {
+  await db.product.delete({ where: { id: productId } });
+  revalidateProduct();
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------- documents

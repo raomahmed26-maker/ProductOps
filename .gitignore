@@ -44,6 +44,7 @@ next-env.d.ts
 /src/generated/prisma
 prisma/*.db
 prisma/*.db-journal
+prisma/.workspace-cleared
 
 # next.js writes these for other agents; not part of the project
 /AGENTS.md

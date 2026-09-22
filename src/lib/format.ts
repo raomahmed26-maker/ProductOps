@@ -1,3 +1,16 @@
+export function formatPlatforms(value: string): string {
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      if (part === "ios") return "iOS";
+      if (part === "android") return "Android";
+      return part;
+    })
+    .join(" and ");
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(Math.round(value));
 }
