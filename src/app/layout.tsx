@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileNav, Sidebar, type NavProduct } from "@/components/nav";
@@ -15,14 +16,25 @@ export const metadata: Metadata = {
     "One place for the stage-gate pipeline, the experiment repository and the thinking behind both.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const portfolio = await getPortfolio();
-  const products: NavProduct[] = portfolio.map((product) => ({
-    slug: product.slug,
-    name: product.name,
-    status: product.derived.status,
-    phaseLabel: PHASE_LABEL[product.phase].replace("-production", "-prod"),
-  }));
+  // Skip static generation. Vercel prerender was querying Prisma before any
+  // database existed, which failed the build on /_not-found.
+  await connection();
+
+  let products: NavProduct[] = [];
+  try {
+    const portfolio = await getPortfolio();
+    products = portfolio.map((product) => ({
+      slug: product.slug,
+      name: product.name,
+      status: product.derived.status,
+      phaseLabel: PHASE_LABEL[product.phase].replace("-production", "-prod"),
+    }));
+  } catch (error) {
+    console.error("Could not load navigation products", error);
+  }
 
   return (
     <html

@@ -34,8 +34,12 @@ npm run dev     # http://localhost:43127
 `npm run setup` migrates and, if the database is empty, loads the sample
 portfolio. It will not overwrite data you have already added.
 
-Requires Node 20 or newer. No external services, no credentials, no network
-access needed — the database is a single SQLite file at `prisma/workspace.db`.
+Requires Node 20 or newer and Postgres. Locally the app defaults to
+`postgresql://productops:productops_local_dev@127.0.0.1:5432/product_ops`.
+On Vercel, set `DATABASE_URL` to a hosted Postgres URL (Neon, Supabase, or
+Vercel Postgres) — serverless hosts cannot keep a SQLite file.
+
+Copy [`.env.example`](.env.example) to `.env` if you need a different URL.
 
 ### Viewing it from anywhere other than localhost
 
@@ -171,7 +175,7 @@ vault/notes/          the brainstorm space, as .md files
 | `npm run db:seed` | Reload the sample portfolio (wipes current products) |
 | `npm run db:clear` | Wipe products, experiments and metrics; leave the schema |
 | `npm run db:clear -- --vault` | Also archive demo notes out of `vault/notes` |
-| `npm run db:studio` | Prisma Studio against the SQLite file |
+| `npm run db:studio` | Prisma Studio against Postgres |
 | `npm run db:reset` | Drop and rebuild the database |
 | `npm run lint` | ESLint |
 
@@ -196,3 +200,17 @@ an app on kill watch. Adjust them there and the whole workspace follows.
 Gate names, expected durations and required documents are in
 [`src/lib/taxonomy.ts`](src/lib/taxonomy.ts), as are the rejection reasons,
 experiment surfaces and every other controlled list.
+
+## Deploy on Vercel
+
+The build that failed with `The table main.Product does not exist` was Next
+prerendering `/_not-found`, which loads the root layout, which queried SQLite.
+There is no SQLite file on Vercel, and there never will be — use Postgres.
+
+1. Create a Postgres database (Vercel Storage → Postgres, or a free [Neon](https://neon.tech) / [Supabase](https://supabase.com) project).
+2. In the Vercel project: **Settings → Environment Variables**.
+   - `DATABASE_URL` — the connection string. Prefer the **pooled** URL. Add `?sslmode=require` if the host needs TLS.
+   - `DIRECT_URL` — only if you use a pooler that cannot run migrations (Supabase transaction mode on port 6543). Set this to the direct port-5432 URL.
+3. Redeploy. `vercel-build` runs `prisma migrate deploy` and, if the database is empty, seeds the sample portfolio.
+
+Until `DATABASE_URL` is set, the site still builds and shows a setup screen instead of crashing.

@@ -8,16 +8,12 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { createPrismaClient } from "../src/lib/create-prisma";
 import { GATES, GATE_SPEC, type DocType, type Gate } from "../src/lib/taxonomy";
 
 const CLEARED_MARKER = path.join(process.cwd(), "prisma", ".workspace-cleared");
 
-const databaseUrl =
-  process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "prisma", "workspace.db")}`;
-
-const db = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: databaseUrl }) });
+const db = createPrismaClient();
 
 const NOW = new Date();
 const day = 86_400_000;

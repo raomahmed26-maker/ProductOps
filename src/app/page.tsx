@@ -6,10 +6,16 @@ import { AttentionFeed, RejectionRollup } from "@/components/attention-feed";
 import { DimensionSpread, ExperimentRail } from "@/components/experiment-rail";
 import { STATUS_SEVERITY } from "@/lib/status";
 import { ButtonLink } from "@/components/ui/button-link";
+import { isDatabaseConfigured } from "@/lib/database";
+import { DatabaseSetup } from "@/components/database-setup";
 
 export const dynamic = "force-dynamic";
 
 export default async function PortfolioPage() {
+  if (!isDatabaseConfigured()) {
+    return <DatabaseSetup />;
+  }
+
   const [products, experiments, rollup] = await Promise.all([
     getPortfolio(),
     getExperiments(),

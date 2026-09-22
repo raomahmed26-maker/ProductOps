@@ -24,9 +24,9 @@ export default function Error({
           {error.message || "The page could not be rendered."}
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
-          If this is a fresh clone, the database may not exist yet. Run{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono">npm run setup</code> and try
-          again.
+          Locally, run <code className="rounded bg-muted px-1.5 py-0.5 font-mono">npm run setup</code>.
+          On Vercel, set <code className="rounded bg-muted px-1.5 py-0.5 font-mono">DATABASE_URL</code>{" "}
+          to a Postgres URL and redeploy.
         </p>
         <Button className="mt-5" onClick={reset}>
           Try again

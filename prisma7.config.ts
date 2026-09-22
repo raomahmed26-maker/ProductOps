@@ -1,11 +1,11 @@
-import path from "node:path";
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-// Local-first by design: the database is a single SQLite file inside the repo,
-// so the workspace runs with no external services and no credentials.
+const LOCAL_DEFAULT =
+  "postgresql://productops:productops_local_dev@127.0.0.1:5432/product_ops";
+
 const databaseUrl =
-  process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "prisma", "workspace.db")}`;
+  process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim() || LOCAL_DEFAULT;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   // The workspace writes Markdown into vault/ at runtime; without this the
   // production server traces the wrong root when the repo sits inside a monorepo.
   outputFileTracingRoot: process.cwd(),
+  serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   // The floating dev badge sits on top of the sidebar footer.
   devIndicators: false,
 };

@@ -8,13 +8,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { createPrismaClient } from "../src/lib/create-prisma";
 
-const databaseUrl =
-  process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "prisma", "workspace.db")}`;
-
-const db = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: databaseUrl }) });
+const db = createPrismaClient();
 
 const MARKER = path.join(process.cwd(), "prisma", ".workspace-cleared");
 const NOTES_DIR = path.join(process.cwd(), "vault", "notes");
