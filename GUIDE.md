@@ -16,6 +16,7 @@ It is not a file host, not an analytics warehouse, and not a design tool. Those 
 - **Which documents does this gate still need?**
 - **Which experiments are running on which app, against which health dimension?**
 - **Should this live app be kept, watched, or killed this week?**
+- **What did we already write down about this app — and where does it live?**
 
 Three products, twelve experiments and a handful of vault notes ship as a demo so the screens are not empty. They are placeholders. Your portfolio replaces them.
 
@@ -238,6 +239,33 @@ If you can open the product page and answer all of the following without leaving
 3. A link to every required document for every completed gate, marked approved
 4. For live apps: this week’s installs, activation, D1, D7 against the kill line
 5. Which experiments are running, queued and already decided, and which of the four dimensions they target
+
+---
+
+## Product brain
+
+Each product has a **Brain** tab — a conversation that only sees that app. Ask it the way you would ask a colleague who has been on the product from day one: *where is the recent PRD? what was the v3 update on onboarding?*
+
+It reads, in this order of usefulness:
+
+1. Document registry entries — title, type, version, owner, status, URL, **summary**
+2. The **living brief** on the Brain tab (paste changelog paragraphs here)
+3. Vault notes tagged to this product
+4. Experiments, QA cycles, store submissions, weekly metrics
+5. The product record itself (audience, gate, kill thresholds)
+
+It does **not** open Figma, Drive or Notion. If the change lives only in those files and you never wrote a summary or a brief, the brain cannot know it. That is why the document summary field exists: write the change, not “see the doc”.
+
+### How to get good answers
+
+- Keep document **versions** honest (`v3`, not always `v1`)
+- Put the actual delta in the summary (“onboarding cut from seven screens to three…”)
+- Tag vault notes with `products: ["your-slug"]`
+- Use the living brief for decisions that are not a document yet
+
+Conversation history is stored per product. Clear it from the Brain tab. It is wiped with `npm run db:clear`.
+
+Optional: set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in the environment if you want a language model to write the answer from the same context. Without a key, the brain still answers from the retrieved records and citations — that is the default, and it is enough for “where is X” and “what did v3 change”.
 
 ---
 

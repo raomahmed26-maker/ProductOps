@@ -102,6 +102,12 @@ keep / watch / kill verdict.
 Thresholds default to 1000 weekly installs, D1 at 55% and D7 at 15%, and can be
 overridden per product.
 
+**Product brain.** Each product has a Brain tab that answers questions from that
+app's documents, living brief, vault notes, experiments and metrics. It does not
+fetch remote files — write the change into the document summary or the brief.
+Without an API key it still retrieves and cites; set `OPENAI_API_KEY` or
+`ANTHROPIC_API_KEY` if you want a model to phrase the answer.
+
 ### Experiment repository — `/experiments`
 
 One canonical record per experiment, whether it is a paywall test, a Reddit

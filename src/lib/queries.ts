@@ -11,6 +11,7 @@ import {
 } from "./status";
 import { iceScore, isOverdue } from "./experiments";
 import type { Gate, Phase } from "./taxonomy";
+import type { BrainCitation } from "./brain-types";
 
 const productInclude = {
   stages: {
@@ -157,6 +158,27 @@ export async function getProductExperiments(productId: string): Promise<Experime
     orderBy: { refId: "asc" },
   });
   return experiments.map(decorate);
+}
+
+export async function getBrainMessages(productId: string) {
+  const rows = await db.brainMessage.findMany({
+    where: { productId },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    role: row.role as "user" | "assistant",
+    content: row.content,
+    citations: (() => {
+      try {
+        const value = JSON.parse(row.citations) as BrainCitation[];
+        return Array.isArray(value) ? value : [];
+      } catch {
+        return [] as BrainCitation[];
+      }
+    })(),
+    createdAt: row.createdAt,
+  }));
 }
 
 /** Recurring store rejection causes, so process fixes can be aimed at the common ones. */

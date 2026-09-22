@@ -189,3 +189,25 @@
 .prose-note hr {
   @apply my-6 border-border;
 }
+
+.prose-brain {
+  @apply text-sm leading-relaxed;
+}
+.prose-brain p {
+  @apply mb-2 last:mb-0;
+}
+.prose-brain ul {
+  @apply mb-2 list-disc space-y-1 pl-4 last:mb-0;
+}
+.prose-brain ol {
+  @apply mb-2 list-decimal space-y-1 pl-4 last:mb-0;
+}
+.prose-brain a {
+  @apply font-medium underline underline-offset-4;
+}
+.prose-brain strong {
+  @apply font-semibold;
+}
+.prose-brain p:last-child {
+  @apply mb-0;
+}

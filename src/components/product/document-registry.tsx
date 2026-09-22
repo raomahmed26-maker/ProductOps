@@ -260,8 +260,12 @@ function DocumentDialog({
             </Field>
           </div>
 
-          <Field label="Summary" htmlFor="doc-summary" hint="One line so a future reader knows why this exists.">
-            <Textarea id="doc-summary" name="summary" defaultValue={document?.summary ?? ""} rows={2} />
+          <Field
+            label="Summary"
+            htmlFor="doc-summary"
+            hint="The product brain reads this. Write the change itself — a version note, not 'see the doc'."
+          >
+            <Textarea id="doc-summary" name="summary" defaultValue={document?.summary ?? ""} rows={4} />
           </Field>
 
           <DialogFooter>

@@ -25,6 +25,8 @@ model Product {
   minWeeklyInstalls Int   @default(1000)
   minD1             Float @default(55)
   minD7             Float @default(15)
+  // Living brief the product brain reads alongside documents, notes and experiments.
+  brief       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -32,6 +34,7 @@ model Product {
   metrics     WeeklyMetric[]
   experiments Experiment[]
   submissions StoreSubmission[]
+  brainMessages BrainMessage[]
 
   @@index([phase])
 }
@@ -212,4 +215,19 @@ model ExperimentResult {
   recordedAt     DateTime @default(now())
 
   experiment Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+}
+
+// One thread of questions and answers per product. The brain only sees that
+// product's documents, notes, experiments and brief — never the rest of the portfolio.
+model BrainMessage {
+  id         String   @id @default(cuid())
+  productId  String
+  role       String // user | assistant
+  content    String
+  citations  String   @default("[]") // JSON: BrainCitation[]
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
 }

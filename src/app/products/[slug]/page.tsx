@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, NotebookPen } from "lucide-react";
-import { getProduct, getProductExperiments } from "@/lib/queries";
+import { ArrowLeft, Brain, NotebookPen } from "lucide-react";
+import { getBrainMessages, getProduct, getProductExperiments } from "@/lib/queries";
 import { listNotes } from "@/lib/vault";
 import {
   GATE_SPEC,
@@ -19,23 +19,37 @@ import { QAPanel } from "@/components/product/qa-panel";
 import { ReviewPanel } from "@/components/product/review-panel";
 import { HealthPanel } from "@/components/product/health-panel";
 import { ExperimentList } from "@/components/product/experiment-list";
+import { ProductBrain } from "@/components/product/product-brain";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/ui/button-link";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: PageProps<"/products/[slug]">) {
   const { slug } = await params;
+  const filters = await searchParams;
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [experiments, allNotes] = await Promise.all([
+  const [experiments, allNotes, brainMessages] = await Promise.all([
     getProductExperiments(product.id),
     listNotes(),
+    getBrainMessages(product.id),
   ]);
   const notes = allNotes.filter((note) => note.products.includes(product.slug));
 
   const stageByGate = new Map(product.stages.map((stage) => [stage.gate as Gate, stage]));
+  const requestedTab = typeof filters.tab === "string" ? filters.tab : null;
+  const tab =
+    requestedTab === "brain" ||
+    requestedTab === "experiments" ||
+    requestedTab === "notes" ||
+    (requestedTab && PHASES.includes(requestedTab as Phase))
+      ? requestedTab
+      : defaultTab(product.phase);
 
   return (
     <div className="mx-auto max-w-[1100px] px-5 py-8 lg:px-8 lg:py-10">
@@ -59,6 +73,10 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           </p>
         </div>
         <div className="flex flex-wrap items-start gap-2">
+          <ButtonLink href={`/products/${product.slug}?tab=brain`} size="sm" variant="outline">
+            <Brain className="size-3.5" />
+            Ask the brain
+          </ButtonLink>
           <ButtonLink href={`/products/${product.slug}/edit`} size="sm" variant="outline">
             Edit product
           </ButtonLink>
@@ -107,8 +125,9 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
         </div>
       </div>
 
-      <Tabs defaultValue={defaultTab(product.phase)} className="mt-6">
+      <Tabs key={tab} defaultValue={tab} className="mt-6">
         <TabsList className="flex-wrap">
+          <TabsTrigger value="brain">Brain</TabsTrigger>
           {PHASES.map((phase) => (
             <TabsTrigger key={phase} value={phase}>
               {PHASE_LABEL[phase]}
@@ -117,6 +136,15 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           <TabsTrigger value="experiments">Experiments</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="brain" className="mt-5">
+          <ProductBrain
+            productId={product.id}
+            productName={product.name}
+            brief={product.brief}
+            messages={brainMessages}
+          />
+        </TabsContent>
 
         {PHASES.map((phase) => (
           <TabsContent key={phase} value={phase} className="mt-5 space-y-4">

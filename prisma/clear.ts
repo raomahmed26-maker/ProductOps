@@ -22,6 +22,7 @@ const ARCHIVE_DIR = path.join(process.cwd(), "vault", "archive", "demo");
 
 async function main() {
   console.log("Clearing products, documents, metrics and experiments...");
+  await db.brainMessage.deleteMany();
   await db.experimentResult.deleteMany();
   await db.experiment.deleteMany();
   await db.weeklyMetric.deleteMany();

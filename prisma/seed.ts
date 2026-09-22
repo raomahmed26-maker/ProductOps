@@ -83,6 +83,7 @@ type ProductSeed = {
   minWeeklyInstalls?: number;
   minD1?: number;
   minD7?: number;
+  brief?: string;
   stages: StageSeed[];
   submissions?: {
     platform: "APP_STORE" | "PLAY_STORE";
@@ -230,10 +231,60 @@ const products: ProductSeed[] = [
     phase: "POST_PRODUCTION",
     currentGate: "LIVE",
     colorSeed: "emerald",
+    brief: [
+      "LedgerLane is receipt-first bookkeeping for sole traders.",
+      "Onboarding v3 (shipped in 1.4.0): three screens instead of seven, camera permission delayed until the first receipt capture, account creation deferred until the user tries to export.",
+      "v2 added recurring expenses and CSV export. v1 was capture plus categories only.",
+      "The binding activation leak is still the signup wall — 23% of installs leave before a single scan, which is why EXP-004 is queued.",
+    ].join(" "),
     stages: [
       completedGate("MARKET_RESEARCH", 168, "Rao", researchDocs("ledgerlane", "Rao", 24)),
-      completedGate("PRD", 150, "Rao", prdDocs("Rao", 150)),
-      completedGate("DESIGN", 136, "Imran", designDocs("Imran", 136)),
+      completedGate("PRD", 18, "Rao", [
+        {
+          title: "Product requirements",
+          docType: "PRD",
+          owner: "Rao",
+          status: "APPROVED",
+          version: "v3",
+          summary:
+            "v3 (current): onboarding cut from seven screens to three. Camera permission moves to the first receipt capture, not the splash. Account creation is deferred until export. Sign-in with Apple/Google stays optional on screen one. Activation event remains first_receipt_scan. v2 added recurring expenses and CSV export. v1 was capture plus categories.",
+          updatedDaysAgo: 18,
+        },
+        {
+          title: "Privacy policy",
+          docType: "PRIVACY_POLICY",
+          owner: "Legal",
+          status: "APPROVED",
+          updatedDaysAgo: 20,
+        },
+        {
+          title: "Terms of service",
+          docType: "TOS",
+          owner: "Legal",
+          status: "APPROVED",
+          updatedDaysAgo: 20,
+        },
+      ]),
+      completedGate("DESIGN", 16, "Imran", [
+        {
+          title: "App UI/UX — all flows",
+          docType: "FIGMA_APP_UI",
+          owner: "Imran",
+          status: "APPROVED",
+          version: "v3",
+          summary:
+            "v3 onboarding frames: 1) value + optional sign-in, 2) first capture with camera permission in-context, 3) category confirmation. The old seven-step wizard (permissions, account, tax year, currency, bank, sample data, home) is in the archive page. Empty and error states for a failed scan are new in this version.",
+          updatedDaysAgo: 16,
+        },
+        {
+          title: "Store graphics — App Store and Play Store",
+          docType: "FIGMA_STORE_GRAPHICS",
+          owner: "Imran",
+          status: "APPROVED",
+          updatedDaysAgo: 16,
+        },
+        { title: "App icon set", docType: "FIGMA_APP_ICON", owner: "Imran", status: "APPROVED", updatedDaysAgo: 16 },
+      ]),
       completedGate("ANALYTICS_CATALOGUE", 130, "Rao", analyticsDoc("Rao", 130)),
       {
         gate: "BUILD",
@@ -991,6 +1042,7 @@ async function main() {
   }
 
   console.log("Resetting workspace data...");
+  await db.brainMessage.deleteMany();
   await db.experimentResult.deleteMany();
   await db.experiment.deleteMany();
   await db.weeklyMetric.deleteMany();
@@ -1016,6 +1068,7 @@ async function main() {
         minWeeklyInstalls: seed.minWeeklyInstalls ?? 1000,
         minD1: seed.minD1 ?? 55,
         minD7: seed.minD7 ?? 15,
+        brief: seed.brief ?? null,
       },
     });
     productIds.set(seed.slug, product.id);
