@@ -52,6 +52,10 @@ real host), or use:
 npm run preview   # build, then serve on 43127 with no origin restriction
 ```
 
+Every script binds `::` rather than `0.0.0.0`, which listens on IPv6 and IPv4
+together. Binding `0.0.0.0` alone refuses connections from any proxy that
+resolves `localhost` to `::1`, which presents as the server being down.
+
 ## What is in it
 
 ### Portfolio dashboard — `/`
