@@ -36,6 +36,22 @@ npm run dev     # http://localhost:43127
 Requires Node 20 or newer. No external services, no credentials, no network
 access needed — the database is a single SQLite file at `prisma/workspace.db`.
 
+### Viewing it from anywhere other than localhost
+
+`npm run dev` is for working on `localhost`. Reaching the dev server through
+anything else — a plain `127.0.0.1`, a LAN address, a tunnel, or a hosted
+preview proxy — trips Next's dev-origin check: the HTML still returns 200 but
+every `/_next/static` request 403s, so the page arrives with no styles and no
+JavaScript and looks broken rather than erroring.
+
+Either add the exact hostname to `allowedDevOrigins` in
+[`next.config.ts`](next.config.ts) (wildcards like `*` are ignored, it wants the
+real host), or use:
+
+```bash
+npm run preview   # build, then serve on 43127 with no origin restriction
+```
+
 ## What is in it
 
 ### Portfolio dashboard — `/`
@@ -133,7 +149,8 @@ vault/notes/          the brainstorm space, as .md files
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Dev server on port 43127 |
+| `npm run dev` | Dev server on port 43127, for work on localhost |
+| `npm run preview` | Production build served on 43127, reachable from any host |
 | `npm run setup` | Migrate, generate the Prisma client, seed |
 | `npm run db:seed` | Reseed the sample portfolio |
 | `npm run db:studio` | Prisma Studio against the SQLite file |
