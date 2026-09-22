@@ -1,6 +1,7 @@
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
-import { needsSsl, resolveDatabaseUrl } from "./database";
+import { forPgPool, resolveDatabaseUrl } from "./database";
 
 function createClient() {
   const url = resolveDatabaseUrl();
@@ -10,13 +11,8 @@ function createClient() {
     );
   }
 
-  const adapter = new PrismaPg({
-    connectionString: url,
-    max: process.env.VERCEL ? 1 : 10,
-    ssl: needsSsl(url) ? { rejectUnauthorized: false } : undefined,
-  });
-
-  return new PrismaClient({ adapter });
+  const pool = new Pool(forPgPool(url));
+  return new PrismaClient({ adapter: new PrismaPg(pool) });
 }
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
